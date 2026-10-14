@@ -10,7 +10,7 @@
                 \item \textbf{粗体 (Bold)}: \textbf{The quick brown fox}
                 \item \textit{斜体 (Italic)}: \textit{The quick brown fox}
                 \item \texttt{等宽 (Monospace)}: \texttt{print("Hello World")}
-                \item \textsc{小型大写 (Small Caps)}: \textsc{Beamer}
+                \item \textbf{\textit{粗斜体 (Bold Italic)}}: \textbf{\textit{The quick brown fox}}
             \end{itemize}
         \end{column}
         \begin{column}{0.48\textwidth}
@@ -19,7 +19,7 @@
                 \item 使用 \structure{structure} 命令强调结构。
                 \item 使用 \alert{alert} 命令表示警示。
                 \item 自定义颜色: \textcolor{main}{Main Color}, \textcolor{blue}{Blue}, \textcolor{red}{Red}.
-                \item \colorbox{yellow}{背景高亮} 也是一种选择。
+                \item \colorbox{sustech!15}{背景高亮} 也是一种选择。
             \end{itemize}
             \vspace{1em}
             \begin{quote}
@@ -32,7 +32,7 @@
 \subsection{列表环境}
 \begin{frame}{多样的列表环境}
     \begin{columns}[T]
-        \begin{column}{0.33\textwidth}
+        \begin{column}{0.32\textwidth}
             \textbf{\color{main} 无序列表 (Itemize)}
             \begin{itemize}
                 \item 第一点
@@ -53,7 +53,7 @@
                 \item 步骤四：结果评估
             \end{enumerate}
         \end{column}
-        \begin{column}{0.33\textwidth}
+        \begin{column}{0.34\textwidth}
             \textbf{\color{main} 描述列表 (Description)}
             \begin{description}
                 \item[API] 应用程序接口
@@ -178,6 +178,7 @@ echo "Deployment successful!"
     \begin{table}
         \caption{不同模型在 ImageNet 上的性能对比}
         \centering
+        \small
         \begin{tabularx}{\textwidth}{Xcccc}
             \toprule
             \textbf{模型架构} & \textbf{年份} & \textbf{参数量 (M)} & \textbf{Top-1 Acc (\%)} & \textbf{Top-5 Acc (\%)} \\
@@ -201,7 +202,7 @@ echo "Deployment successful!"
 \section{可视化}
 
 \subsection{TikZ 绘图}
-\begin{frame}{TikZ 流程图示例}
+\begin{frame}[c]{TikZ 流程图示例}
     \centering
     \begin{tikzpicture}[
         scale=0.8, transform shape,

@@ -1,122 +1,304 @@
 \usetheme{Boadilla}
-    \definecolor{main}{HTML}{3F67B8}
-    % font
-    \setbeamerfont{title}{size=\LARGE, series=\bfseries}
-    \setbeamerfont{part title}{size=\Large}
-    % color
-    \setbeamercolor{alertblock title}{bg=main!15, fg=main}
-    \setbeamercolor{block title}{bg=main!10, fg=main}
-    \setbeamercolor{frametitle}{fg=main}
-    \setbeamercolor{structure}{fg=main}
-    \setbeamercolor{section number projected}{bg=main, fg=white}
-    \setbeamercolor{subsection number projected}{bg=main!50, fg=white}
-    \setbeamercolor{section number projected}{bg=main, fg=white}
-    \setbeamercolor{subsection number projected}{bg=main!50, fg=white}
-    % template
-    \setbeamertemplate{sections/subsections in toc}[square]
-    \setbeamertemplate{navigation symbols}{}
+\usefonttheme{professionalfonts}
+\setbeamertemplate{navigation symbols}{}
 
-\AtBeginSection[]{
-    \begin{frame}[noframenumbering, plain]
-        \centering
-        \vfill
-        {
-            \usebeamerfont{section title}
-            \LARGE
-            \insertsectionnumber.\ \insertsection
-            \par
-        }
-        \vfill
-        \begin{tikzpicture}[overlay, remember picture]
-            \pgfmathsetlengthmacro{\bary}{4cm}
-            \pgfmathsetlengthmacro{\barxstart}{0.10\paperwidth}
-            \pgfmathsetlengthmacro{\barxend}{0.90\paperwidth}
-            \pgfmathsetlengthmacro{\barheight}{0.08cm}
-            \pgfmathsetlengthmacro{\barwidth}{\barxend-\barxstart}
-            \pgfmathsetmacro{\totalframes}{max(\inserttotalframenumber, 1)}
-            \pgfmathsetmacro{\ratio}{min((\value{framenumber})/\totalframes, 1)}
-            \pgfmathsetlengthmacro{\progress}{\ratio*\barwidth}
-            \fill[gray!20, rounded corners=1.2pt]
-                ($(current page.south west)+(\barxstart, \bary)$) rectangle
-                ($(current page.south west)+(\barxend, \bary+\barheight)$);
-            \fill[main, rounded corners=1.2pt]
-                ($(current page.south west)+(\barxstart, \bary)$) rectangle
-                ($(current page.south west)+(\barxstart+\progress, \bary+\barheight)$);
-        \end{tikzpicture}
-    \end{frame}
+% 全局几何: 只在这里改, 页眉 / 正文 / 页脚 / 章节页自动同步
+% 必须是长度寄存器 (\newlength): 只有这样 \addtolength{-2\omMargin} 才会做乘法,
+% 若写成 \def\omMargin{0.75cm}, "2\omMargin" 会被解析成 "20.75cm"。
+\newlength{\omMargin}\setlength{\omMargin}{0.75cm}   % 左右页边距
+\newlength{\omLogo}  \setlength{\omLogo}{0.60cm}     % 页眉校徽高度
+\newlength{\omBarY}  \setlength{\omBarY}{1.05cm}     % 章节页进度条距页底距离
+\newlength{\omBarW}  % 进度条底槽宽度
+\def\omCur{}         % 进度条进度对应的帧号
+\setbeamersize{text margin left=\omMargin, text margin right=\omMargin}
+% 由 \paperwidth 派生的宽度: 在 \begin{document} 时统一算好,
+% 页眉 / 页脚 / 章节页取用同一个基准 (页脚比页眉更早排版, 不能各自现算)
+\newlength{\omRuleW}    % 正文宽度
+\newlength{\omHairW}    % 页眉细线中"细"的部分 (另 1.5cm 是品牌蓝短线)
+\newlength{\omHeadW}    % 页眉标题可用宽度 (给右侧校徽留出 3.4cm)
+\AtBeginDocument{%
+    \setlength{\omRuleW}{\paperwidth}\addtolength{\omRuleW}{-2\omMargin}%
+    \setlength{\omHairW}{\omRuleW}\addtolength{\omHairW}{-1.5cm}%
+    \setlength{\omHeadW}{\omRuleW}\addtolength{\omHeadW}{-3.4cm}%
+    \setlength{\omBarW}{\omRuleW}%
 }
 
-\apptocmd{\partpage}{
-    \begin{multicols}{2}
-        \begin{spacing}{1.2}
-            \tableofcontents[part=\value{part}]
-        \end{spacing}
-    \end{multicols}
-}{}{}
+% ---------------------------------------------------------------------- 配色
+% 取色自 static/image/logo.png: 徽标蓝 #0099FF + 黑色字标
+\definecolor{sustech}{HTML}{0099FF}   % 品牌蓝 (与校徽完全一致)
+\definecolor{main}{HTML}{0068B8}      % 主色: 品牌蓝加深, 白底对比度 5.7:1
+\definecolor{ink}{HTML}{0D1B2A}       % 标题 / 正文墨色
+\definecolor{muted}{HTML}{5A6B7C}     % 次级信息
+\definecolor{hair}{HTML}{DCE6F0}      % 细线 / 进度条底槽
+\definecolor{alert}{HTML}{C62828}     % 警示红
+\definecolor{example}{HTML}{2E7D32}   % 示例绿
 
-\usepackage[BoldFont, SlantFont]{xeCJK}
-    % English
+\setbeamercolor{normal text}{fg=ink}
+\setbeamercolor{structure}{fg=main}
+\setbeamercolor{alerted text}{fg=alert}
+\setbeamercolor{frametitle}{fg=main, bg=}
+\setbeamercolor{title}{fg=main}
+\setbeamercolor{author}{fg=ink}
+\setbeamercolor{institute}{fg=muted}
+\setbeamercolor{date}{fg=muted}
+\setbeamercolor{part name}{fg=main}
+\setbeamercolor{footline}{fg=muted}
+\setbeamercolor{caption name}{fg=main}
+\setbeamercolor{caption}{fg=ink}
+% 注: 部分标题 / 目录条目在 beamer 里是超链接, 文字颜色由 hyperref 的
+%     linkcolor 决定 (见下方 \hypersetup), 这里无需也无法覆盖。
+% 区块: 底色用主色浅调, 标题用实色, 三种区块同构
+\setbeamercolor{block title}{bg=sustech!14, fg=main}
+\setbeamercolor{block body}{bg=sustech!5, fg=ink}
+\setbeamercolor{block title alerted}{bg=alert!12, fg=alert}
+\setbeamercolor{block body alerted}{bg=alert!4, fg=ink}
+\setbeamercolor{block title example}{bg=example!12, fg=example}
+\setbeamercolor{block body example}{bg=example!4, fg=ink}
+\setbeamercolor{example text}{fg=example}
+% 列表
+\setbeamercolor{itemize item}{fg=main}
+\setbeamercolor{itemize subitem}{fg=main!55}
+\setbeamercolor{itemize subsubitem}{fg=muted}
+\setbeamercolor{enumerate item}{fg=main}
+\setbeamercolor{enumerate subitem}{fg=main!55}
+\setbeamercolor{description item}{fg=main}
+% 目录
+\setbeamercolor{section number projected}{bg=main, fg=white}
+\setbeamercolor{subsection number projected}{bg=main!55, fg=white}
+
+% ---------------------------------------------------------------------- 字体
+\usepackage[SlantFont]{xeCJK}
+% 说明: 不启用 xeCJK 的 BoldFont 选项 —— 那是"伪粗体"; 本模板已为中文指定
+%       真粗体 (AlibabaPuHuiTi-3-85-Bold), 叠加伪粗体会让笔画糊成黑块。
+    % 西文 / 等宽 (FiraCode 是 Fira 家族, 与 Fira Math 同源)
+    % FiraCode 只有 Regular/Bold 两个字重, 没有真斜体: 斜体由 AutoFakeSlant 合成。
+    % 必须同时声明 ItalicFont / BoldItalicFont, 否则 \textbf{\textit{...}} 会
+    % 因 b/it 未定义而悄悄退回直立粗体 (编译时报 Font shape undefined)。
     \defaultfontfeatures[FiraCode]{
-        Path          = static/font/,
-        Extension     = .ttf,
-        UprightFont   = FiraCode-Regular,
-        BoldFont      = FiraCode-Bold,
-        AutoFakeSlant = 0.2,
-        Contextuals   = Alternate
+        Path           = static/font/,
+        Extension      = .ttf,
+        UprightFont    = FiraCode-Regular,
+        BoldFont       = FiraCode-Bold,
+        ItalicFont     = FiraCode-Regular,
+        BoldItalicFont = FiraCode-Bold,
+        AutoFakeSlant  = 0.2,
+        BoldItalicFeatures = {FakeSlant=0.2},   % AutoFakeSlant 只管 m/it, 粗斜体要单独给
+        Contextuals    = Alternate
     }
     \setmainfont{FiraCode}
     \setsansfont{FiraCode}
     \setmonofont{FiraCode}
-    % Chinese
+    % 中文 (同样只有 Regular/Bold, 斜体由 AutoFakeSlant 合成)
     \defaultfontfeatures[AlibabaPuHuiTi-3]{
-        Path          = static/font/,
-        Extension     = .otf,
-        UprightFont   = AlibabaPuHuiTi-3-55-Regular,
-        BoldFont      = AlibabaPuHuiTi-3-85-Bold,
-        AutoFakeSlant = 0.2
+        Path           = static/font/,
+        Extension      = .otf,
+        UprightFont    = AlibabaPuHuiTi-3-55-Regular,
+        BoldFont       = AlibabaPuHuiTi-3-85-Bold,
+        ItalicFont     = AlibabaPuHuiTi-3-55-Regular,
+        BoldItalicFont = AlibabaPuHuiTi-3-85-Bold,
+        AutoFakeSlant  = 0.2,
+        BoldItalicFeatures = {FakeSlant=0.2}
     }
     \setCJKmainfont{AlibabaPuHuiTi-3}
     \setCJKsansfont{AlibabaPuHuiTi-3}
     \setCJKmonofont{AlibabaPuHuiTi-3}
+
+% 数学: Fira Math 只装在 TeX Live 的 texmf 树里, 未注册到系统字体库,
+%       因此必须按文件名加载 —— \setmathfont{Fira Math} 会报 "font cannot be found"。
 \usepackage{amsmath, esint, physics, unicode-math}
-    % tlmgr install firamath
     \unimathsetup{math-style=ISO, bold-style=ISO, mathrm=sym}
-    \setmathfont{Fira Math}
-\usepackage[dvipsnames]{xcolor}
+    \setmathfont{FiraMath-Regular.otf}
+    % Fira Math 没有花体 (U+1D49C 起) 与哥特体字母表, 缺失时 unicode-math 会
+    % 静默回退到 Latin Modern Math (衬线), 与正文风格割裂 —— 显式指定 STIX Two。
+    \setmathfont{STIXTwoMath-Regular.otf}[range={cal,frak}, Scale=MatchUppercase]
+
+% 字号: 一屏一标题, 正文最小 11pt 等效
+\setbeamerfont{title}{size=\Huge, series=\bfseries}
+\setbeamerfont{author}{size=\large}
+\setbeamerfont{institute}{size=\normalsize}
+\setbeamerfont{date}{size=\small}
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
+\setbeamerfont{part name}{size=\small, series=\bfseries}
+\setbeamerfont{part title}{size=\Huge, series=\bfseries}
+\setbeamerfont{section title}{size=\Huge, series=\bfseries}
+\setbeamerfont{structure}{series=\bfseries}
+\setbeamerfont{footline}{size=\scriptsize}
+\setbeamerfont{block title}{size=\normalsize, series=\bfseries}
+\setbeamerfont{caption}{size=\small}
+\setbeamerfont{caption name}{series=\bfseries}
+
+\usepackage{xcolor}
 \usepackage{hyperref}
     \hypersetup{
         pdfauthor={iydon},
         pdfcreator={null},
         pdfproducer={null},
         colorlinks = true,
-        linkcolor  = main!50!black,  % Aquamarine!50!black
-        urlcolor   = YellowOrange!85!black,
-        citecolor  = violet!85!black,
+        linkcolor  = main,           % 内部跳转
+        urlcolor   = sustech!70!black,  % 外部链接 (品牌蓝加深, 保证可读)
+        citecolor  = example!85!black,
     }
 \usepackage{caption, graphicx, tikz}
+    \captionsetup{font=small, labelfont={bf, color=main}, textfont={color=ink}, skip=4pt}
     \usetikzlibrary{arrows.meta, calc, positioning, shapes}
-    \addtobeamertemplate{headline}{}{
-        \ifnum\insertframenumber>1
-            \begin{tikzpicture}[remember picture, overlay]
-                \node[anchor=north east, xshift=-0.3cm, yshift=-0.2cm] at (current page.north east) {
-                    \includegraphics[height=0.55cm]{static/image/logo.png}
-                };
-            \end{tikzpicture}
-        \fi
-    }
-    \addtobeamertemplate{frametitle}{}{
+
+% --------------------------------------------------------------------- 组件
+% 列表记号: 去掉主题的三角/五角星, 改为与配色一致的小圆点
+\setbeamertemplate{itemize item}{\raise0.25ex\hbox{\small\textbullet}}
+\setbeamertemplate{itemize subitem}{\raise0.20ex\hbox{\scriptsize\textbullet}}
+\setbeamertemplate{itemize subsubitem}{\raise0.15ex\hbox{\tiny\textendash}}
+\setbeamertemplate{enumerate item}{\usebeamerfont*{enumerate item}\color{main}\insertenumlabel.}
+\setbeamertemplate{enumerate subitem}{\color{main!55}\insertenumlabel)}
+\setbeamertemplate{sections/subsections in toc}[square]
+% 区块: 圆角、无阴影, 靠底色区分层级 (Boadilla 默认带阴影, 这里关掉)
+\setbeamertemplate{blocks}[rounded][shadow=false]
+% 图表标题统一编号, 避免"图 1"与"表"编号不一致
+\setbeamertemplate{caption}[numbered]
+
+% 章节 / 部分标签 (中文数字; \zhnum 由 ctex 载入的 zhnumber 提供, 参量为计数器名)
+\newcommand{\omSectionLabel}{第\,\zhnum{section}\,节}
+\newcommand{\omPartLabel}{第\,\zhnum{part}\,部分}
+
+\AtBeginSection[]{%
+    \begin{frame}[noframenumbering, plain]
         \begin{tikzpicture}[remember picture, overlay]
-            \draw[line width=0.2cm, main!30]
-            ([xshift=+0.3cm, yshift=-1.1cm]current page.north west) --
-            ([xshift=-0.3cm, yshift=-1.1cm]current page.north east);
+            % 进度条: 底槽 + 品牌蓝填充 (当前页 / 总页数)
+            \edef\omCur{\the\numexpr\value{framenumber}+1\relax}%
+            \ifnum\omCur>\inserttotalframenumber\relax
+                \edef\omCur{\inserttotalframenumber}%
+            \fi
+            \pgfmathsetmacro{\omRatio}{\omCur/\inserttotalframenumber}%
+            \coordinate (barSW) at (current page.south west);
+            \coordinate (barA) at ([xshift=\omMargin, yshift=\omBarY]barSW);
+            \coordinate (barNE) at ([xshift=\omBarW, yshift=0.09cm]barA);
+            \coordinate (barFG) at ($(barA)!\omRatio!(barNE)$);
+            \fill[hair, rounded corners=0.45mm] (barA) rectangle (barNE);
+            \fill[sustech, rounded corners=0.45mm] (barA) rectangle (barFG|-barNE);
         \end{tikzpicture}
-    }
+        \vfill
+        \begin{center}
+            {\usebeamerfont{part name}\usebeamercolor[fg]{part name}\omSectionLabel\par}%
+            \vskip0.20cm
+            {\usebeamerfont{section title}\usebeamercolor[fg]{normal text}\insertsection\par}%
+            \vskip0.30cm
+            {\color{sustech}\rule{1.6cm}{2.4pt}}\par
+        \end{center}
+        \vfill
+    \end{frame}
+}
+
+% ------------------------------------------------------------------- 页眉页脚
+% 页眉: 标题与正文左对齐; 细线 + 品牌蓝短线; 校徽浮于右上角
+% \nointerlineskip 必须逐个 box 加: 否则 TeX 会在相邻 box 之间插入行距,
+% 页眉会凭空高出一大截。
+\setbeamertemplate{frametitle}{%
+    \nointerlineskip
+    \vskip0.28cm
+    \nointerlineskip
+    \hbox to\paperwidth{%
+        \hskip\omMargin
+        \hbox{\parbox[b]{\omHeadW}{%
+            \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\strut\insertframetitle}}%
+        \hfil
+    }%
+    \nointerlineskip
+    \vskip0.08cm
+    \nointerlineskip
+    \hbox to\paperwidth{%
+        \hskip\omMargin
+        \hbox{\color{sustech}\rule{1.5cm}{1.6pt}}%
+        \hbox{\raisebox{0.5pt}{\color{hair}\rule{\omHairW}{0.6pt}}}%
+        \hskip\omMargin
+    }%
+    \vskip0.24cm
+}
+\addtobeamertemplate{headline}{}{%
+    \ifnum\insertframenumber>1
+        \begin{tikzpicture}[remember picture, overlay]
+            \node[anchor=north east, inner sep=0pt, xshift=-\omMargin, yshift=-0.24cm]
+                at (current page.north east) {\includegraphics[height=\omLogo]{static/image/logo.png}};
+        \end{tikzpicture}%
+    \fi
+}
+% 页脚: 一条细线 + 作者/机构 · 标题 · 页码
+\setbeamertemplate{footline}{%
+    \nointerlineskip
+    \hbox to\paperwidth{%
+        \hskip\omMargin
+        {\color{hair}\rule{\omRuleW}{0.5pt}}%
+        \hskip\omMargin
+    }%
+    \nointerlineskip
+    \vskip0.12cm
+    \nointerlineskip
+    \hbox to\paperwidth{%
+        \hskip\omMargin
+        {\usebeamerfont{footline}\usebeamercolor[fg]{footline}\strut
+         \insertauthor\;\textperiodcentered\;\insertinstitute}%
+        \hfil
+        {\usebeamerfont{footline}\usebeamercolor[fg]{footline}\insertshorttitle}%
+        \hfil
+        {\usebeamerfont{footline}\color{main}\bfseries\insertframenumber}%
+        {\usebeamerfont{footline}\color{muted}/\inserttotalframenumber}%
+        \hskip\omMargin
+    }%
+    \vskip0.12cm
+}
+
+% ------------------------------------------------------------------- 首页/章节
+\setbeamertemplate{title page}{%
+    \begin{tikzpicture}[remember picture, overlay]
+        \fill[sustech] (current page.north west) rectangle ([yshift=-0.26cm]current page.north east);
+    \end{tikzpicture}%
+    \vskip0.72cm
+    \begin{center}
+        \includegraphics[height=1.05cm]{static/image/logo.png}%
+    \end{center}%
+    \vfill
+    \begin{center}
+        {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}%
+        \vskip0.30cm
+        {\color{sustech}\rule{1.8cm}{2.4pt}}\par
+        \vskip0.55cm
+        {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}%
+        \vskip0.16cm
+        {\usebeamerfont{institute}\usebeamercolor[fg]{institute}\insertinstitute\par}%
+        \vskip0.10cm
+        {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}%
+    \end{center}
+    \vfill
+}
+\setbeamertemplate{part page}{%
+    \vfill
+    \begin{center}
+        {\usebeamerfont{part name}\usebeamercolor[fg]{part name}\omPartLabel\par}%
+        \vskip0.22cm
+        {\usebeamerfont{part title}\usebeamercolor[fg]{part title}\insertpart\par}%
+        \vskip0.30cm
+        {\color{sustech}\rule{1.6cm}{2.4pt}}\par
+    \end{center}
+    \vskip0.80cm
+    % 章节清单: 单栏 + 居中 minipage. 多栏 (multicols) 时 beamer 目录自带的
+    % \vskip/\vfill 会让左右栏起始高度不一致; 外面套 \small 只为缩小 beamer
+    % 每项之前的 1.5em 间距 (em 按当前字号取值)。
+    \begin{center}
+        \small
+        \begin{minipage}{0.72\omRuleW}
+            \begin{spacing}{1.1}
+                \tableofcontents[part=\value{part}, hideallsubsections]
+            \end{spacing}
+        \end{minipage}
+    \end{center}
+    \vfill
+}
+
+% ------------------------------------------------------------------- 代码高亮
 \usepackage[breakable, minted, skins]{tcolorbox}
+    \usemintedstyle{vs}   % 浅底配色, 关键字深蓝, 与主色同族
     \tcbset{
         iCodeStyle/.style={
             breakable,
             enhanced,
-            drop shadow,
             listing only,
             listing engine=minted,
             minted options={
@@ -124,11 +306,20 @@
                 breaklines,
                 autogobble,
                 fontsize=\tiny,
-                numbersep=3pt,
+                numbersep=4pt,
             },
-            colframe=main,
+            colframe=sustech!25,
             colback=white,
-            left=5mm,
+            colbacktitle=main,
+            coltitle=white,
+            fonttitle=\ttfamily\small,
+            boxrule=0.4pt,
+            arc=1.4mm,
+            left=5.5mm,
+            right=2mm,
+            top=1mm,
+            bottom=1mm,
+            shadow={0.6mm}{-0.6mm}{0mm}{opacity=0.18,black!45!white},
         }
     }
     \NewTCBListing{iCodeEnv}{ O{} m m }{
@@ -141,17 +332,18 @@
         breakable,
         tcbox raise base,
         nobeforeafter,
-        arc=2pt,
-        colback=gray!5!white,
-        colframe=white,
-        left=0pt,
-        right=0pt,
+        arc=1mm,
+        colback=sustech!6,
+        colframe=sustech!18,
+        boxrule=0.3pt,
+        left=1pt,
+        right=1pt,
         top=1pt,
         bottom=1pt,
-        boxsep=0pt,
+        boxsep=0.6pt,
         fontupper=\ttfamily,
     }{\mintinline{#1}{#2}}
-    % patch
+    % 常用语言快捷方式
     \NewTCBListing{ipyenv}{ O{} m }
         {iCodeStyle, minted language=python, title={#2}, #1}
     \NewTCBListing{ishenv}{ O{} m }
@@ -163,7 +355,7 @@
     \NewDocumentCommand{\isqlcmd}{ v }{\iCodeCmd[sql]{#1}}
 
 \usepackage{booktabs}
-\usepackage{etoolbox}
-\usepackage{multicol}
+\usepackage{colortbl}
+    \arrayrulecolor{main!75}   % 三线表规则线统一为加深主色
 \usepackage{setspace}
 \usepackage{tabularx}
