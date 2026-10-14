@@ -5,6 +5,8 @@
 % 全局几何: 只在这里改, 页眉 / 正文 / 页脚 / 章节页自动同步
 % 必须是长度寄存器 (\newlength): 只有这样 \addtolength{-2\omMargin} 才会做乘法,
 % 若写成 \def\omMargin{0.75cm}, "2\omMargin" 会被解析成 "20.75cm"。
+% 写内容时注意: columns 各栏宽度之和 + 栏间距 (\columnsep, 默认 10pt) 不能超过
+% \textwidth, 否则整块会溢出页边距 (三栏建议每栏 <= 0.31\textwidth)。
 \newlength{\omMargin}\setlength{\omMargin}{0.75cm}   % 左右页边距
 \newlength{\omLogo}  \setlength{\omLogo}{0.60cm}     % 页眉校徽高度
 \newlength{\omBarY}  \setlength{\omBarY}{1.05cm}     % 章节页进度条距页底距离
@@ -12,14 +14,14 @@
 \def\omCur{}         % 进度条进度对应的帧号
 \setbeamersize{text margin left=\omMargin, text margin right=\omMargin}
 % 由 \paperwidth 派生的宽度: 在 \begin{document} 时统一算好,
-% 页眉 / 页脚 / 章节页取用同一个基准 (页脚比页眉更早排版, 不能各自现算)
-\newlength{\omRuleW}    % 正文宽度
+% 避免页眉(先排版)与页脚取到不同的基准
+\newlength{\omRuleW}    % 正文宽度 = \textwidth = 左右页边距之间的距离
 \newlength{\omHairW}    % 页眉细线中"细"的部分 (另 1.5cm 是品牌蓝短线)
-\newlength{\omHeadW}    % 页眉标题可用宽度 (给右侧校徽留出 3.4cm)
+\newlength{\omHeadW}    % 页眉标题可用宽度 (给右侧校徽留出 3.5cm)
 \AtBeginDocument{%
-    \setlength{\omRuleW}{\paperwidth}\addtolength{\omRuleW}{-2\omMargin}%
+    \setlength{\omRuleW}{\textwidth}%
     \setlength{\omHairW}{\omRuleW}\addtolength{\omHairW}{-1.5cm}%
-    \setlength{\omHeadW}{\omRuleW}\addtolength{\omHeadW}{-3.4cm}%
+    \setlength{\omHeadW}{\omRuleW}\addtolength{\omHeadW}{-3.5cm}%
     \setlength{\omBarW}{\omRuleW}%
 }
 
@@ -148,7 +150,8 @@
 \setbeamertemplate{itemize subitem}{\raise0.20ex\hbox{\scriptsize\textbullet}}
 \setbeamertemplate{itemize subsubitem}{\raise0.15ex\hbox{\tiny\textendash}}
 \setbeamertemplate{enumerate item}{\usebeamerfont*{enumerate item}\color{main}\insertenumlabel.}
-\setbeamertemplate{enumerate subitem}{\color{main!55}\insertenumlabel)}
+\setbeamertemplate{enumerate subitem}{\usebeamerfont*{enumerate subitem}\color{main!55}\insertsubenumlabel)}
+\setbeamertemplate{enumerate subsubitem}{\usebeamerfont*{enumerate subsubitem}\color{muted}\insertsubsubenumlabel)}
 \setbeamertemplate{sections/subsections in toc}[square]
 % 区块: 圆角、无阴影, 靠底色区分层级 (Boadilla 默认带阴影, 这里关掉)
 \setbeamertemplate{blocks}[rounded][shadow=false]
@@ -189,26 +192,26 @@
 
 % ------------------------------------------------------------------- 页眉页脚
 % 页眉: 标题与正文左对齐; 细线 + 品牌蓝短线; 校徽浮于右上角
-% \nointerlineskip 必须逐个 box 加: 否则 TeX 会在相邻 box 之间插入行距,
-% 页眉会凭空高出一大截。
+% 两个容易踩的坑:
+%   1) 页眉排版区**已经在左右页边距之内**, 宽度就是 \textwidth,
+%      所以这里不能再用 \hskip\omMargin 平移 (会整体右移一个边距, 且顶到页边);
+%   2) 相邻 box 之间必须逐个 \nointerlineskip, 否则 TeX 插入行距,
+%      页眉会凭空高出一大截。
 \setbeamertemplate{frametitle}{%
     \nointerlineskip
     \vskip0.28cm
     \nointerlineskip
-    \hbox to\paperwidth{%
-        \hskip\omMargin
-        \hbox{\parbox[b]{\omHeadW}{%
-            \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\strut\insertframetitle}}%
+    \hbox to\textwidth{%
+        \parbox[b]{\omHeadW}{%
+            \usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\strut\insertframetitle}%
         \hfil
     }%
     \nointerlineskip
     \vskip0.08cm
     \nointerlineskip
-    \hbox to\paperwidth{%
-        \hskip\omMargin
-        \hbox{\color{sustech}\rule{1.5cm}{1.6pt}}%
-        \hbox{\raisebox{0.5pt}{\color{hair}\rule{\omHairW}{0.6pt}}}%
-        \hskip\omMargin
+    \hbox to\textwidth{%
+        \color{sustech}\rule{1.5cm}{1.6pt}%
+        \raisebox{0.5pt}{\color{hair}\rule{\omHairW}{0.6pt}}%
     }%
     \vskip0.24cm
 }
