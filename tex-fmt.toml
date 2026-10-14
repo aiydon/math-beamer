@@ -1,0 +1,12 @@
+# tex-fmt 配置: 直接运行 `tex-fmt` 即按此格式化, 无需命令行参数
+# 不自动折行: 折行会在命令中途断开且不留缩进, 反而更难读
+wrap = false
+# 自定义代码环境按 verbatim 处理, 不重排其内容
+verbatims = [
+  "verbatim",
+  "Verbatim",
+  "lstlisting",
+  "minted",
+  "comment",
+  "iCodeEnv",
+]
